@@ -1,0 +1,16 @@
+project_path: /home/wzk/Project/Other/sc
+PIP_DIR: /home/wzk/github/ngs_pipeline/pipeline
+BIN_DIR: /home/wzk/anaconda3/envs/evolution/bin
+THREADS: 16
+
+# ### fastp
+# length_required: 150
+# qualified_quality_phred: 20
+# unqualified_percent_limit: 15
+
+bowtie_ref: /home/wzk/database/GENOME/mus_musculus/Mus_musculus.GRCm38.dna.toplevel
+maximum_fragment: 2000
+
+SAMPLES:
+  - SRR5635513
+
