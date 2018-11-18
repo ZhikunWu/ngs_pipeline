@@ -14,32 +14,96 @@ rule bowtie2:
         IN_PATH + "/log/{sample}_bowtie2.log",
     run:
         ### -k {params.multimapping}
-        shell("bowtie2  -X {params.maximum_fragment} --local --mm --threads {threads} -x {params.bowtie_ref} -1 {input.R1} -2 {input.R2} > {output.sam} 2>{log}")
+        shell("bowtie2  --very-sensitive -X {params.maximum_fragment} --local --mm --threads {threads} -x {params.bowtie_ref} -1 {input.R1} -2 {input.R2} > {output.sam} 2>{log}")
 
 rule sam2bam:
     input:
-        sam = IN_PATH + '/mapping/{sample}.sam',
+        sam = temp(IN_PATH + '/mapping/{sample}.sam'),
     output:
-        # bam = IN_PATH + '/mapping/{sample}.bam',
-        # filtMultip_bam = IN_PATH + '/mapping/{sample}.filtMultip.bam',
-        # filt_bam = IN_PATH + '/mapping/{sample}.filt.bam',
-        # fixmate = IN_PATH + '/mapping/{sample}.fixmate.tmp',
-        sorted_bam = IN_PATH + '/mapping/{sample}.sorted.bam',
-    params:
-        assign_multimappers = SRC_DIR + "/assign_multimappers.py",
-        # multimapping = 4
+        bam = IN_PATH + '/mapping/{sample}.bam',
+    # params:
+    #     assign_multimappers = SRC_DIR + "/assign_multimappers.py",
     run:
-        shell("samtools view -Sb {input.sam} | samtools sort -  > {output.sorted_bam}")
-        # shell("samtools view -F 524 -f 2 -u  {output.bam} | samtools sort -n - > {output.filtMultip_bam}")
-        # shell("samtools view -h {output.filtMultip_bam} | {params.assign_multimappers} -k {params.multimapping} -paired-end | samtools view -bS - > {output.filt_bam}")
-        # shell("samtools fixmate -r {output.filt_bam} {output.fixmate}")
-        # shll("samtools view -F 1804 -f 2 -u {output.fixmate} | samtools sort - > {output.sorted_bam}")
+        ### Non-unique alignments, -q 10
+        shell("samtools view -Sb -q 10 {input.sam} | samtools sort  -  > {output.bam}")
 
 
-rule bam2bed:
+rule RemoveMitochondrial:
     input:
-        bam = IN_PATH + '/mapping/{sample}.sorted.bam',
+        bam = temp(IN_PATH + '/mapping/{sample}.bam'),
     output:
-        bed = IN_PATH + '/mapping/{sample}.bed',
+        filt_bam = IN_PATH + '/mapping/{sample}_filt_mitochrondrial.bam',
+    params:
+        mitochondrial = config["mitochondrial"],
     run:
-        shell("bedtools bamtobed -i {input.bam} > {output.bed}")
+        shell("samtools index -b {input.bam}")
+        shell("samtools idxstats {input.bam} | cut -f 1 | grep -v {params.mitochondrial} | xargs samtools view -b {input.bam} > {output.filt_bam}")
+
+
+rule MarkDuplicates:
+    input:
+        bam = temp(IN_PATH + '/mapping/{sample}_filt_mitochrondrial.bam'),
+    output:
+        bam = temp(IN_PATH + '/mapping/{sample}/{sample}_deduplicated.bam'),
+        metrics = IN_PATH + '/mapping/{sample}/{sample}_dup_metrics.txt',
+    params:
+        PICARD = config['PICARD'],
+    log:
+        IN_PATH + "/log/{sample}.markDuplicate.log",
+    run:
+        ###  removing PCR duplicates
+        shell('java -Xmx50g -jar {params.PICARD} MarkDuplicates INPUT={input.bam} OUTPUT={output.bam} METRICS_FILE={output.metrics} REMOVE_DUPLICATES=true ASSUME_SORTED=true >{log} 2>&1')
+
+rule AddGroup:
+    input:
+        bam = rules.MarkDuplicates.output.bam,
+    output:
+        bam = IN_PATH + '/mapping/{sample}/{sample}_final.bam',
+    params:
+        PICARD = config['PICARD'],
+    log:
+        IN_PATH + "/log/{sample}.addGroup.log",
+    run:
+        shell('java -jar {params.PICARD} AddOrReplaceReadGroups INPUT={input.bam} OUTPUT={output.bam} SORT_ORDER=coordinate RGID=1 RGPL=Illumina RGLB={wildcards.sample} RGPU={wildcards.sample} RGSM={wildcards.sample} >{log} 2>&1')
+
+
+rule BAMIndex:
+    input:
+        bam = rules.AddGroup.output.bam,
+    output:
+        bai = IN_PATH + '/mapping/{sample}/{sample}_final.bam.bai',
+    params:
+        PICARD = config['PICARD'],
+    log:
+        IN_PATH + "/log/{sample}.bamIndex.log",
+    run:
+        shell('java -jar {params.PICARD} BuildBamIndex INPUT={input.bam} OUTPUT={output.bai} >{log} 2>&1')
+
+
+rule BamStats:
+    input:
+        bam = IN_PATH + '/mapping/{sample}/{sample}_final.bam',
+    output:
+        stats = IN_PATH + '/mapping/{sample}/{sample}_bam_stats.xls',
+    run:
+        shell('samtools flagstat {input.bam} > {output.stats}')
+
+rule MergeBamStats:
+    input:
+        stats = expand(rules.BamStats.output.stats, sample=SAMPLES),
+        clean = IN_PATH + '/FastQC/Samples_trim_stats.xls',
+    output:
+        stats = IN_PATH + '/mapping/Samples_bam_stats.xls',
+    params:
+        SamtoolsBamStats = SRC_DIR + '/SamtoolsBamStats.py',
+    log:
+        IN_PATH + "/log/MergeBamStats.log",
+    run:
+        stats_files = ','.join(input.stats)
+        shell('python {params.SamtoolsBamStats} --input {stats_files} --cleanSummary {input.clean} --out {output.stats} >{log} 2>&1')
+
+
+
+
+
+
