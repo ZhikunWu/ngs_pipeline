@@ -11,6 +11,19 @@ THREADS: 16
 bowtie_ref: /home/wzk/database/GENOME/mus_musculus/Mus_musculus.GRCm38.dna.toplevel
 maximum_fragment: 2000
 
+###MACS:
+qvalue: 0.05
+shift: -100
+extsize: 200
+# Effective genome size. It can be 1.0e+9 or 1000000000,or shortcuts:'hs' for human (2.7e9), 'mm' for mouse (1.87e9), 'ce' for C. elegans (9e7) and 'dm' for fruitfly (1.2e8), Default:hs
+gsize: mm
+
+### RemoveMitochondrial
+mitochondrial: MT
+
+PICARD: /home/wzk/anaconda3/envs/evolution/bin/picard-2.8.2.jar
+
+
 SAMPLES:
   - SRR5635513
 

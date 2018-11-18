@@ -16,6 +16,7 @@ SRC_DIR = PIP_DIR + "/../src"
 
 include: RULE_DIR + "/QualityControl.rule.py"
 include: RULE_DIR + "/ReadsMapping.rule.py"
+include: PIP_DIR + "/ATAC-seq/CallPeaks.rule.py"
 
 
 rule all:
@@ -27,6 +28,9 @@ rule all:
         IN_PATH + '/FastQC/Samples_trim_stats.xls',
         ########################################################################
         ################################# mapping ##############################
-        expand(IN_PATH + '/mapping/{sample}.sam', sample=SAMPLES),
-        expand(IN_PATH + '/mapping/{sample}.sorted.bam', sample=SAMPLES),
-        expand(IN_PATH + '/mapping/{sample}.bed', sample=SAMPLES),
+        expand(IN_PATH + '/mapping/{sample}/{sample}_final.bam', sample=SAMPLES),
+        IN_PATH + '/mapping/Samples_bam_stats.xls',
+        ########################################################################
+        ############################ Call peaks ################################
+        expand(IN_PATH + "/peaks/{sample}/NA_summits.bed", sample=SAMPLES),
+        ########################################################################
