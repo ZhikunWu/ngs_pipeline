@@ -3,7 +3,7 @@ rule bowtie2:
         R1 = IN_PATH + '/clean/{sample}.clean.paired.R1.fq.gz',
         R2 = IN_PATH + '/clean/{sample}.clean.paired.R2.fq.gz',
     output:
-        sam = IN_PATH + '/mapping/{sample}.sam',
+        sam = temp(IN_PATH + '/mapping/{sample}/{sample}.sam'),
     threads:
         THREADS
     params:
@@ -18,9 +18,9 @@ rule bowtie2:
 
 rule sam2bam:
     input:
-        sam = temp(IN_PATH + '/mapping/{sample}.sam'),
+        sam = IN_PATH + '/mapping/{sample}/{sample}.sam',
     output:
-        bam = IN_PATH + '/mapping/{sample}.bam',
+        bam = temp(IN_PATH + '/mapping/{sample}/{sample}.bam'),
     # params:
     #     assign_multimappers = SRC_DIR + "/assign_multimappers.py",
     run:
@@ -30,9 +30,9 @@ rule sam2bam:
 
 rule RemoveMitochondrial:
     input:
-        bam = temp(IN_PATH + '/mapping/{sample}.bam'),
+        bam = IN_PATH + '/mapping/{sample}/{sample}.bam',
     output:
-        filt_bam = IN_PATH + '/mapping/{sample}_filt_mitochrondrial.bam',
+        filt_bam = temp(IN_PATH + '/mapping/{sample}/{sample}_filt_mitochrondrial.bam'),
     params:
         mitochondrial = config["mitochondrial"],
     run:
@@ -42,7 +42,7 @@ rule RemoveMitochondrial:
 
 rule MarkDuplicates:
     input:
-        bam = temp(IN_PATH + '/mapping/{sample}_filt_mitochrondrial.bam'),
+        bam = IN_PATH + '/mapping/{sample}/{sample}_filt_mitochrondrial.bam',
     output:
         bam = temp(IN_PATH + '/mapping/{sample}/{sample}_deduplicated.bam'),
         metrics = IN_PATH + '/mapping/{sample}/{sample}_dup_metrics.txt',

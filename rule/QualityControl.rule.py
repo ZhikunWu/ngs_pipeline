@@ -4,10 +4,10 @@ rule fastp:
     Discard whole read if the low quality sequence percentage is lower than the threshold.
     """
     input:
-        # R1 = IN_PATH + '/raw/{sample}.R1.fastq.gz',
-        # R2 = IN_PATH + '/raw/{sample}.R2.fastq.gz',
-        R1 = IN_PATH + '/raw/{sample}_1.fastq.gz',
-        R2 = IN_PATH + '/raw/{sample}_2.fastq.gz',
+        R1 = IN_PATH + '/raw/{sample}.R1.fastq.gz',
+        R2 = IN_PATH + '/raw/{sample}.R2.fastq.gz',
+        # R1 = IN_PATH + '/raw/{sample}_1.fastq.gz',
+        # R2 = IN_PATH + '/raw/{sample}_2.fastq.gz',
     output:
         R1 = IN_PATH + '/clean/{sample}.clean.paired.R1.fq.gz',
         R2 = IN_PATH + '/clean/{sample}.clean.paired.R2.fq.gz',
