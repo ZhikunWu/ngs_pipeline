@@ -9,6 +9,7 @@ import yaml
 IN_PATH = config['project_path']
 THREADS = config["THREADS"]
 SAMPLES = config['SAMPLES']
+COMPARES = config['COMPARES']
 BIN_DIR = config["BIN_DIR"]
 PIP_DIR = config["PIP_DIR"]
 RULE_DIR = PIP_DIR + "/../rule"
@@ -32,5 +33,6 @@ rule all:
         IN_PATH + '/mapping/Samples_bam_stats.xls',
         ########################################################################
         ############################ Call peaks ################################
-        expand(IN_PATH + "/peaks/{sample}/NA_summits.bed", sample=SAMPLES),
+        # expand(IN_PATH + "/peaks/{sample}/NA_peaks.narrowPeak", sample=SAMPLES),
+        expand(IN_PATH + "/peaks/{compare}/NA_peaks.narrowPeak", compare=COMPARES),
         ########################################################################

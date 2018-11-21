@@ -26,4 +26,9 @@ PICARD: /home/wzk/anaconda3/envs/evolution/bin/picard-2.8.2.jar
 
 SAMPLES:
   - SRR5635513
+  - SRR5635516
 
+
+COMPARES:
+  ### treatment control
+  - SRR5635516___SRR5635513
